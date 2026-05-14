@@ -31,9 +31,31 @@ echo Instalador de Walmart Casos Extension
 echo ===================================================
 
 echo Descargando la ultima version de la extension desde GitHub...
-powershell -Command "$ErrorActionPreference='Stop'; $zipUrl='https://github.com/tecniserviciosh2000/walmart-casos-extension/archive/refs/heads/main.zip'; $zipFile=$env:TEMP+'\ext_install.zip'; $extractTemp=$env:TEMP+'\ext_temp_install'; if (Test-Path $zipFile) { Remove-Item $zipFile -Force }; if (Test-Path $extractTemp) { Remove-Item $extractTemp -Recurse -Force }; Write-Host 'Descargando ZIP...'; Invoke-WebRequest -Uri $zipUrl -OutFile $zipFile -UseBasicParsing; Write-Host 'Extrayendo...'; Expand-Archive -Path $zipFile -DestinationPath $extractTemp -Force; if (!(Test-Path '%INSTALL_DIR%')) { [void](New-Item -ItemType Directory -Force -Path '%INSTALL_DIR%') }; Copy-Item -Path ($extractTemp+'\walmart-casos-extension-main\*') -Destination '%INSTALL_DIR%' -Recurse -Force; Remove-Item $zipFile -Force; Remove-Item $extractTemp -Recurse -Force; Write-Host 'Descarga completada.'"
 
-if %errorlevel% neq 0 (
+set "PS_TEMP=%TEMP%\ext_install_script.ps1"
+(
+echo $ErrorActionPreference = 'Stop'
+echo $zipUrl = 'https://github.com/tecniserviciosh2000/walmart-casos-extension/archive/refs/heads/main.zip'
+echo $zipFile = "$env:TEMP\ext_install.zip"
+echo $extractTemp = "$env:TEMP\ext_temp_install"
+echo if (Test-Path $zipFile^) { Remove-Item $zipFile -Force }
+echo if (Test-Path $extractTemp^) { Remove-Item $extractTemp -Recurse -Force }
+echo Write-Host 'Descargando ZIP...'
+echo Invoke-WebRequest -Uri $zipUrl -OutFile $zipFile -UseBasicParsing
+echo Write-Host 'Extrayendo...'
+echo Expand-Archive -Path $zipFile -DestinationPath $extractTemp -Force
+echo if (-not (Test-Path '%INSTALL_DIR%'^)^) { New-Item -ItemType Directory -Force -Path '%INSTALL_DIR%' ^| Out-Null }
+echo Copy-Item -Path "$extractTemp\walmart-casos-extension-main\*" -Destination '%INSTALL_DIR%' -Recurse -Force
+echo Remove-Item $zipFile -Force
+echo Remove-Item $extractTemp -Recurse -Force
+echo Write-Host 'Descarga completada.'
+) > "%PS_TEMP%"
+
+powershell -ExecutionPolicy Bypass -NoProfile -File "%PS_TEMP%"
+set PSERROR=%errorlevel%
+if exist "%PS_TEMP%" del "%PS_TEMP%"
+
+if !PSERROR! neq 0 (
     echo ERROR: Hubo un problema al descargar o extraer la extension.
     pause
     exit /B
