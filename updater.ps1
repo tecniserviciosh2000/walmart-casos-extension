@@ -14,16 +14,17 @@ function Write-Log($message) {
 
 Write-Log "--- Iniciando comprobación de actualización ---"
 
-$remoteUrl = "https://raw.githubusercontent.com/tecniserviciosh2000/walmart-casos-extension/main/manifest.json"
+$remoteUrl = 'https://raw.githubusercontent.com/tecniserviciosh2000/walmart-casos-extension/main/manifest.json'
 $localManifestPath = "$installPath\manifest.json"
 
 try {
     # Evitar problemas de versión TLS
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     
-    # Añadir timestamp para evitar caché
+    # Añadir timestamp para evitar caché usando concatenación segura
     $timestampForUrl = (Get-Date).Ticks
-    $remoteManifest = Invoke-RestMethod -Uri "$remoteUrl?t=$timestampForUrl" -UseBasicParsing
+    $requestUri = $remoteUrl + "?t=" + $timestampForUrl
+    $remoteManifest = Invoke-RestMethod -Uri $requestUri -UseBasicParsing
     $remoteVersion = $remoteManifest.version
 
     if (Test-Path $localManifestPath) {
