@@ -33,16 +33,32 @@ try {
         Write-Log "Versión Local: $localVersion | Versión Remota: $remoteVersion"
 
         if ($localVersion -ne $remoteVersion) {
-            Write-Log "Actualización detectada. Descargando nueva versión..."
+            Write-Log "Actualización detectada. Descargando nueva versión en formato ZIP..."
             
-            # Hacer el pull/reset de github de forma limpia
-            $outFetch = git fetch origin main 2>&1
-            Write-Log "Git Fetch: $outFetch"
+            $zipUrl = "https://github.com/tecniserviciosh2000/walmart-casos-extension/archive/refs/heads/main.zip"
+            $zipFile = "$env:TEMP\walmart-extension-update.zip"
+            $extractTemp = "$env:TEMP\walmart-extension-temp"
             
-            $outReset = git reset --hard origin/main 2>&1
-            Write-Log "Git Reset: $outReset"
+            # Limpiar temporales si existen
+            if (Test-Path $zipFile) { Remove-Item $zipFile -Force }
+            if (Test-Path $extractTemp) { Remove-Item $extractTemp -Recurse -Force }
             
-            Write-Log "Actualización completada a la versión $remoteVersion."
+            try {
+                Invoke-WebRequest -Uri $zipUrl -OutFile $zipFile -UseBasicParsing
+                Expand-Archive -Path $zipFile -DestinationPath $extractTemp -Force
+                
+                # Copiar los archivos extraídos (Github añade una carpeta raíz con el nombre del repo y la rama)
+                $sourcePath = "$extractTemp\walmart-casos-extension-main\*"
+                Copy-Item -Path $sourcePath -Destination $installPath -Recurse -Force
+                
+                # Limpiar la basura
+                Remove-Item $zipFile -Force
+                Remove-Item $extractTemp -Recurse -Force
+                
+                Write-Log "Actualización completada exitosamente a la versión $remoteVersion."
+            } catch {
+                Write-Log "Error durante la descarga o extracción del ZIP: $($_.Exception.Message)"
+            }
         } else {
             Write-Log "La extensión está actualizada."
         }

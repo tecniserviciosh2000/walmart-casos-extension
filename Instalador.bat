@@ -32,27 +32,13 @@ echo ===================================================
 echo Instalador de Walmart Casos Extension
 echo ===================================================
 
-echo Comprobando instalacion de Git...
-git --version >nul 2>&1
+echo Descargando la ultima version de la extension desde GitHub...
+powershell -Command "$ErrorActionPreference='Stop'; $zipUrl='https://github.com/tecniserviciosh2000/walmart-casos-extension/archive/refs/heads/main.zip'; $zipFile=\"$env:TEMP\ext_install.zip\"; $extractTemp=\"$env:TEMP\ext_temp_install\"; if (Test-Path $zipFile) { Remove-Item $zipFile -Force }; if (Test-Path $extractTemp) { Remove-Item $extractTemp -Recurse -Force }; Write-Host 'Descargando ZIP...'; Invoke-WebRequest -Uri $zipUrl -OutFile $zipFile -UseBasicParsing; Write-Host 'Extrayendo...'; Expand-Archive -Path $zipFile -DestinationPath $extractTemp -Force; if (!(Test-Path '%INSTALL_DIR%')) { New-Item -ItemType Directory -Force -Path '%INSTALL_DIR%' | Out-Null }; Copy-Item -Path \"$extractTemp\walmart-casos-extension-main\*\" -Destination '%INSTALL_DIR%' -Recurse -Force; Remove-Item $zipFile -Force; Remove-Item $extractTemp -Recurse -Force; Write-Host 'Descarga completada.'"
+
 if %errorlevel% neq 0 (
-    echo ERROR: Git no esta instalado en este sistema.
-    echo Por favor, instale Git ^(https://git-scm.com/^) asegurando que se agregue al PATH y vuelva a intentarlo.
+    echo ERROR: Hubo un problema al descargar o extraer la extension.
     pause
     exit /B
-)
-
-if exist "%INSTALL_DIR%" (
-    echo.
-    echo El directorio %INSTALL_DIR% ya existe.
-    echo Actualizando repositorio existente...
-    cd /d "%INSTALL_DIR%"
-    git fetch origin main
-    git reset --hard origin/main
-) else (
-    echo.
-    echo Clonando el repositorio en %INSTALL_DIR%...
-    git clone "%REPO_URL%" "%INSTALL_DIR%"
-    cd /d "%INSTALL_DIR%"
 )
 
 :: ==========================================
