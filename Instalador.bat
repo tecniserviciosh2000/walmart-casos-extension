@@ -26,14 +26,12 @@ if '%errorlevel%' NEQ '0' (
 :: ==========================================
 set INSTALL_DIR=C:\WalmartCasosExtension
 set REPO_URL=https://github.com/tecniserviciosh2000/walmart-casos-extension.git
-set TASK_NAME=WalmartCasosExtensionUpdater
-
 echo ===================================================
 echo Instalador de Walmart Casos Extension
 echo ===================================================
 
 echo Descargando la ultima version de la extension desde GitHub...
-powershell -Command "$ErrorActionPreference='Stop'; $zipUrl='https://github.com/tecniserviciosh2000/walmart-casos-extension/archive/refs/heads/main.zip'; $zipFile=\"$env:TEMP\ext_install.zip\"; $extractTemp=\"$env:TEMP\ext_temp_install\"; if (Test-Path $zipFile) { Remove-Item $zipFile -Force }; if (Test-Path $extractTemp) { Remove-Item $extractTemp -Recurse -Force }; Write-Host 'Descargando ZIP...'; Invoke-WebRequest -Uri $zipUrl -OutFile $zipFile -UseBasicParsing; Write-Host 'Extrayendo...'; Expand-Archive -Path $zipFile -DestinationPath $extractTemp -Force; if (!(Test-Path '%INSTALL_DIR%')) { New-Item -ItemType Directory -Force -Path '%INSTALL_DIR%' | Out-Null }; Copy-Item -Path \"$extractTemp\walmart-casos-extension-main\*\" -Destination '%INSTALL_DIR%' -Recurse -Force; Remove-Item $zipFile -Force; Remove-Item $extractTemp -Recurse -Force; Write-Host 'Descarga completada.'"
+powershell -Command "$ErrorActionPreference='Stop'; $zipUrl='https://github.com/tecniserviciosh2000/walmart-casos-extension/archive/refs/heads/main.zip'; $zipFile=$env:TEMP+'\ext_install.zip'; $extractTemp=$env:TEMP+'\ext_temp_install'; if (Test-Path $zipFile) { Remove-Item $zipFile -Force }; if (Test-Path $extractTemp) { Remove-Item $extractTemp -Recurse -Force }; Write-Host 'Descargando ZIP...'; Invoke-WebRequest -Uri $zipUrl -OutFile $zipFile -UseBasicParsing; Write-Host 'Extrayendo...'; Expand-Archive -Path $zipFile -DestinationPath $extractTemp -Force; if (!(Test-Path '%INSTALL_DIR%')) { [void](New-Item -ItemType Directory -Force -Path '%INSTALL_DIR%') }; Copy-Item -Path ($extractTemp+'\walmart-casos-extension-main\*') -Destination '%INSTALL_DIR%' -Recurse -Force; Remove-Item $zipFile -Force; Remove-Item $extractTemp -Recurse -Force; Write-Host 'Descarga completada.'"
 
 if %errorlevel% neq 0 (
     echo ERROR: Hubo un problema al descargar o extraer la extension.
