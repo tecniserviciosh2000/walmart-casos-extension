@@ -26,6 +26,7 @@ if '%errorlevel%' NEQ '0' (
 :: ==========================================
 set INSTALL_DIR=C:\WalmartCasosExtension
 set REPO_URL=https://github.com/tecniserviciosh2000/walmart-casos-extension.git
+set TASK_NAME=WalmartCasosExtensionUpdater
 echo ===================================================
 echo Instalador de Walmart Casos Extension
 echo ===================================================
