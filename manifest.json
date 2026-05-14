@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Walmart LATAM - Casos Dashboard",
+  "version": "1.1",
+  "description": "Muestra el conteo de casos por estado desde Tririga para realizar un analisis",
+  "permissions": [
+    "cookies",
+    "storage",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "https://ptririgamx.wal-mart.com/*"
+  ],
+  "background": {
+    "service_worker": "scripts/background.js"
+  },
+  "action": {
+    "default_title": "Casos en Tririga"
+  },
+  "side_panel": {
+    "default_path": "views/sidepanel.html"
+  },
+  "icons": {
+    "16": "assets/icons/icon16.png",
+    "64": "assets/icons/icon64.png",
+    "128": "assets/icons/icon128.png"
+  }
+}
