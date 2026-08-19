@@ -280,6 +280,83 @@
     margin-bottom: 20px;
   }
   #content h3 { margin-bottom: 20px; }
+
+  /* Sub-filas del desglose de Activos */
+  .sub-row td {
+    background: #f0f6ff;
+    border-bottom: 1px solid #dbe6f1;
+    font-size: 12px;
+  }
+  .sub-row td.label {
+    padding-left: 24px;
+    color: #475569;
+    font-weight: 500;
+  }
+  .sub-row td.label::before {
+    content: '└ ';
+    color: #94a3b8;
+    font-weight: 400;
+  }
+  .sub-row:last-of-type td {
+    border-bottom: 2px solid #cbd5e1;
+  }
+
+  /* Input numérico para desglose */
+  .sub-input {
+    width: 52px;
+    padding: 4px 6px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--primary);
+    text-align: center;
+    background: #ffffff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -moz-appearance: textfield;
+  }
+  .sub-input::-webkit-outer-spin-button,
+  .sub-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .sub-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 113, 206, 0.15);
+  }
+  .sub-input.invalid {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+    color: var(--danger);
+  }
+
+  /* Valor calculado automáticamente */
+  .auto-value {
+    display: inline-block;
+    min-width: 30px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--primary);
+  }
+
+  /* Fila Activo destacada */
+  .activo-row td {
+    background: #fefce8;
+    border-bottom: 1px solid #fde68a;
+    font-weight: 600;
+  }
+
+  /* Alerta de validación */
+  .validation-alert {
+    color: var(--danger);
+    font-size: 10px;
+    font-weight: 600;
+    text-align: center;
+    padding: 4px 0;
+  }
 </style>
 </head>
 <body>

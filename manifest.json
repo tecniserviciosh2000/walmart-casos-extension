@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Walmart LATAM - Casos Dashboard",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Muestra el conteo de casos por estado desde Tririga para realizar un analisis",
   "permissions": [
     "cookies",

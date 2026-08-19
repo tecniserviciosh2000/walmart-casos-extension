@@ -24,6 +24,133 @@ const commonParams = "&dsId11=0&sectionName11=RecordInformation&secSectionName11
 // Estado global
 let sessionStatus = null;
 
+// ─── Persistencia del desglose de Activos ───────────────────────────────────
+const STORAGE_KEY_DESGLOSE = 'desgloseActivos';
+
+/**
+ * Guarda los valores de desglose en chrome.storage.local
+ */
+function saveDesgloseValues(eliminar, velada) {
+  chrome.storage.local.set({
+    [STORAGE_KEY_DESGLOSE]: { eliminar, velada }
+  });
+}
+
+/**
+ * Carga los valores de desglose desde chrome.storage.local
+ * @returns {Promise<{eliminar: number, velada: number}>}
+ */
+function loadDesgloseValues() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(STORAGE_KEY_DESGLOSE, (data) => {
+      const stored = data[STORAGE_KEY_DESGLOSE];
+      resolve({
+        eliminar: stored?.eliminar || 0,
+        velada: stored?.velada || 0
+      });
+    });
+  });
+}
+
+/**
+ * Recalcula "Pendientes de Realizar" y actualiza la UI + persistencia
+ */
+function recalcularPendientesRealizar(totalActivos) {
+  const inputEliminar = document.getElementById('inputEliminar');
+  const inputVelada = document.getElementById('inputVelada');
+  const spanRealizar = document.getElementById('countRealizar');
+  const validationMsg = document.getElementById('desgloseValidation');
+
+  let eliminar = parseInt(inputEliminar.value) || 0;
+  let velada = parseInt(inputVelada.value) || 0;
+
+  // No permitir negativos
+  if (eliminar < 0) { eliminar = 0; inputEliminar.value = 0; }
+  if (velada < 0) { velada = 0; inputVelada.value = 0; }
+
+  const suma = eliminar + velada;
+  const realizar = totalActivos - suma;
+
+  // Validación: la suma no puede exceder el total
+  if (suma > totalActivos) {
+    inputEliminar.classList.add('invalid');
+    inputVelada.classList.add('invalid');
+    spanRealizar.textContent = '0';
+    spanRealizar.style.color = 'var(--danger)';
+    validationMsg.textContent = `⚠️ La suma (${suma}) excede los Activos (${totalActivos})`;
+    validationMsg.style.display = 'block';
+  } else {
+    inputEliminar.classList.remove('invalid');
+    inputVelada.classList.remove('invalid');
+    spanRealizar.textContent = realizar;
+    spanRealizar.style.color = 'var(--primary)';
+    validationMsg.style.display = 'none';
+  }
+
+  // Guardar en persistencia
+  saveDesgloseValues(eliminar, velada);
+}
+
+/**
+ * Renderiza las sub-filas del desglose de Activos (expandidas por defecto)
+ */
+async function renderDesgloseActivo(table, totalActivos) {
+  const saved = await loadDesgloseValues();
+  const realizar = Math.max(0, totalActivos - saved.eliminar - saved.velada);
+
+  // Sub-fila: Pendientes de Eliminar
+  const trEliminar = document.createElement('tr');
+  trEliminar.className = 'sub-row';
+  trEliminar.innerHTML = `
+    <td class="label">Pendientes de Eliminar</td>
+    <td class="count">
+      <input type="number" id="inputEliminar" class="sub-input" 
+             value="${saved.eliminar}" min="0" max="${totalActivos}">
+    </td>
+    <td class="comment">WM</td>
+  `;
+  table.appendChild(trEliminar);
+
+  // Sub-fila: Pendientes de Velada
+  const trVelada = document.createElement('tr');
+  trVelada.className = 'sub-row';
+  trVelada.innerHTML = `
+    <td class="label">Pendientes de Velada</td>
+    <td class="count">
+      <input type="number" id="inputVelada" class="sub-input" 
+             value="${saved.velada}" min="0" max="${totalActivos}">
+    </td>
+    <td class="comment">WM</td>
+  `;
+  table.appendChild(trVelada);
+
+  // Sub-fila: Pendientes de Realizar (calculado)
+  const trRealizar = document.createElement('tr');
+  trRealizar.className = 'sub-row';
+  trRealizar.innerHTML = `
+    <td class="label">Pendientes de Realizar</td>
+    <td class="count"><span class="auto-value" id="countRealizar">${realizar}</span></td>
+    <td class="comment">TSH2000</td>
+  `;
+  table.appendChild(trRealizar);
+
+  // Fila oculta para mensaje de validación
+  const trValidation = document.createElement('tr');
+  trValidation.innerHTML = `
+    <td colspan="3" id="desgloseValidation" class="validation-alert" style="display:none;"></td>
+  `;
+  table.appendChild(trValidation);
+
+  // Event listeners para recálculo en tiempo real
+  const recalc = () => recalcularPendientesRealizar(totalActivos);
+  document.getElementById('inputEliminar').addEventListener('input', recalc);
+  document.getElementById('inputVelada').addEventListener('input', recalc);
+
+  // Validar con valores cargados
+  recalcularPendientesRealizar(totalActivos);
+}
+
+
 /**
  * Valida el estado de la sesión en Tririga
  */
@@ -186,13 +313,21 @@ async function loadAll() {
     if (count === "Error") errorCount++;
     results.push({ ...item, count });
 
-    const tr = document.createElement("tr");
+    // Renderizar fila normal
+    const tr = document.createElement('tr');
+    const isActivo = item.label === 'Activo';
+    if (isActivo) tr.className = 'activo-row';
     tr.innerHTML = `
-      <td class="label">${item.label}</td>
-      <td class="count">${count === "Error" ? '<span style="color:#d32f2f" title="Error de conexión">⚠️</span>' : count}</td>
+      <td class="label">${item.label}${isActivo ? ' ▾' : ''}</td>
+      <td class="count">${count === 'Error' ? '<span style="color:#d32f2f" title="Error de conexión">⚠️</span>' : count}</td>
       <td class="comment">${item.comment}</td>
     `;
     table.appendChild(tr);
+
+    // Si es Activo, renderizar desglose expandido
+    if (isActivo && typeof count === 'number') {
+      await renderDesgloseActivo(table, count);
+    }
   }
 
   // Mostrar alerta si hay errores
