@@ -30,15 +30,15 @@ const STORAGE_KEY_DESGLOSE = 'desgloseActivos';
 /**
  * Guarda los valores de desglose en chrome.storage.local
  */
-function saveDesgloseValues(eliminar, velada) {
+function saveDesgloseValues(eliminar, velada, oriente) {
   chrome.storage.local.set({
-    [STORAGE_KEY_DESGLOSE]: { eliminar, velada }
+    [STORAGE_KEY_DESGLOSE]: { eliminar, velada, oriente }
   });
 }
 
 /**
  * Carga los valores de desglose desde chrome.storage.local
- * @returns {Promise<{eliminar: number, velada: number}>}
+ * @returns {Promise<{eliminar: number, velada: number, oriente: number}>}
  */
 function loadDesgloseValues() {
   return new Promise((resolve) => {
@@ -46,57 +46,63 @@ function loadDesgloseValues() {
       const stored = data[STORAGE_KEY_DESGLOSE];
       resolve({
         eliminar: stored?.eliminar || 0,
-        velada: stored?.velada || 0
+        velada: stored?.velada || 0,
+        oriente: stored?.oriente || 0
       });
     });
   });
 }
 
 /**
- * Recalcula "Pendientes de Realizar" y actualiza la UI + persistencia
+ * Recalcula "Pendientes de Realizar" (Oriente y San Salvador) y actualiza la UI + persistencia
  */
 function recalcularPendientesRealizar(totalActivos) {
   const inputEliminar = document.getElementById('inputEliminar');
   const inputVelada = document.getElementById('inputVelada');
-  const spanRealizar = document.getElementById('countRealizar');
+  const inputOriente = document.getElementById('inputOriente');
+  const spanSanSalvador = document.getElementById('countSanSalvador');
   const validationMsg = document.getElementById('desgloseValidation');
 
   let eliminar = parseInt(inputEliminar.value) || 0;
   let velada = parseInt(inputVelada.value) || 0;
+  let oriente = parseInt(inputOriente.value) || 0;
 
   // No permitir negativos
   if (eliminar < 0) { eliminar = 0; inputEliminar.value = 0; }
   if (velada < 0) { velada = 0; inputVelada.value = 0; }
+  if (oriente < 0) { oriente = 0; inputOriente.value = 0; }
 
-  const suma = eliminar + velada;
-  const realizar = totalActivos - suma;
+  const suma = eliminar + velada + oriente;
+  const sanSalvador = totalActivos - suma;
 
   // Validación: la suma no puede exceder el total
   if (suma > totalActivos) {
     inputEliminar.classList.add('invalid');
     inputVelada.classList.add('invalid');
-    spanRealizar.textContent = '0';
-    spanRealizar.style.color = 'var(--danger)';
+    inputOriente.classList.add('invalid');
+    spanSanSalvador.textContent = '0';
+    spanSanSalvador.style.color = 'var(--danger)';
     validationMsg.textContent = `⚠️ La suma (${suma}) excede los Activos (${totalActivos})`;
     validationMsg.style.display = 'block';
   } else {
     inputEliminar.classList.remove('invalid');
     inputVelada.classList.remove('invalid');
-    spanRealizar.textContent = realizar;
-    spanRealizar.style.color = 'var(--primary)';
+    inputOriente.classList.remove('invalid');
+    spanSanSalvador.textContent = sanSalvador;
+    spanSanSalvador.style.color = 'var(--primary)';
     validationMsg.style.display = 'none';
   }
 
   // Guardar en persistencia
-  saveDesgloseValues(eliminar, velada);
+  saveDesgloseValues(eliminar, velada, oriente);
 }
 
 /**
- * Renderiza las sub-filas del desglose de Activos (expandidas por defecto)
+ * Renderiza las sub-filas del desglose de Activos
  */
 async function renderDesgloseActivo(table, totalActivos) {
   const saved = await loadDesgloseValues();
-  const realizar = Math.max(0, totalActivos - saved.eliminar - saved.velada);
+  const sanSalvador = Math.max(0, totalActivos - saved.eliminar - saved.velada - saved.oriente);
 
   // Sub-fila: Pendientes de Eliminar
   const trEliminar = document.createElement('tr');
@@ -124,15 +130,28 @@ async function renderDesgloseActivo(table, totalActivos) {
   `;
   table.appendChild(trVelada);
 
-  // Sub-fila: Pendientes de Realizar (calculado)
-  const trRealizar = document.createElement('tr');
-  trRealizar.className = 'sub-row';
-  trRealizar.innerHTML = `
+  // Sub-fila: Pendientes de Realizar - Oriente (editable)
+  const trOriente = document.createElement('tr');
+  trOriente.className = 'sub-row';
+  trOriente.innerHTML = `
     <td class="label">Pendientes de Realizar</td>
-    <td class="count"><span class="auto-value" id="countRealizar">${realizar}</span></td>
-    <td class="comment">TSH2000</td>
+    <td class="count">
+      <input type="number" id="inputOriente" class="sub-input" 
+             value="${saved.oriente}" min="0" max="${totalActivos}">
+    </td>
+    <td class="comment">Oriente - H2000</td>
   `;
-  table.appendChild(trRealizar);
+  table.appendChild(trOriente);
+
+  // Sub-fila: Pendientes de Realizar - San Salvador (calculado automáticamente)
+  const trSanSalvador = document.createElement('tr');
+  trSanSalvador.className = 'sub-row sub-row-end';
+  trSanSalvador.innerHTML = `
+    <td class="label">Pendientes de Realizar</td>
+    <td class="count"><span class="auto-value" id="countSanSalvador">${sanSalvador}</span></td>
+    <td class="comment">San Salvador - H2000</td>
+  `;
+  table.appendChild(trSanSalvador);
 
   // Fila oculta para mensaje de validación
   const trValidation = document.createElement('tr');
@@ -145,6 +164,7 @@ async function renderDesgloseActivo(table, totalActivos) {
   const recalc = () => recalcularPendientesRealizar(totalActivos);
   document.getElementById('inputEliminar').addEventListener('input', recalc);
   document.getElementById('inputVelada').addEventListener('input', recalc);
+  document.getElementById('inputOriente').addEventListener('input', recalc);
 
   // Validar con valores cargados
   recalcularPendientesRealizar(totalActivos);
@@ -374,6 +394,32 @@ async function loadAll() {
 }
 
 /**
+ * Prepara el contenido para captura reemplazando inputs con texto plano
+ * Evita que los campos editables aparezcan como formularios en la imagen
+ */
+function prepareForCapture(content) {
+  const inputs = content.querySelectorAll('.sub-input');
+  const replacements = [];
+  inputs.forEach(input => {
+    const span = document.createElement('span');
+    span.className = 'auto-value';
+    span.textContent = input.value || '0';
+    input.parentNode.replaceChild(span, input);
+    replacements.push({ span, input });
+  });
+  return replacements;
+}
+
+/**
+ * Restaura los inputs originales después de la captura
+ */
+function restoreAfterCapture(replacements) {
+  replacements.forEach(({ span, input }) => {
+    span.parentNode.replaceChild(input, span);
+  });
+}
+
+/**
  * Copia el dashboard como imagen al portapapeles
  */
 async function copyToClipboard() {
@@ -384,11 +430,17 @@ async function copyToClipboard() {
     copyBtn.disabled = true;
     copyBtn.textContent = '⏳ Copiando...';
 
+    // Reemplazar inputs con texto plano para la captura
+    const replacements = prepareForCapture(content);
+
     const canvas = await html2canvas(content, {
       scale: 2,
       useCORS: true,
       backgroundColor: '#ffffff'
     });
+
+    // Restaurar inputs tras la captura
+    restoreAfterCapture(replacements);
 
     // Convertir canvas a blob
     canvas.toBlob(async (blob) => {
@@ -438,11 +490,17 @@ async function saveAsImage() {
     saveBtn.disabled = true;
     saveBtn.textContent = '⏳ Guardando...';
 
+    // Reemplazar inputs con texto plano para la captura
+    const replacements = prepareForCapture(content);
+
     const canvas = await html2canvas(content, {
       scale: 2,
       useCORS: true,
       backgroundColor: '#ffffff'
     });
+
+    // Restaurar inputs tras la captura
+    restoreAfterCapture(replacements);
 
     const link = document.createElement('a');
     link.download = `reporte_walmart_${new Date().toISOString().slice(0, 10)}.png`;

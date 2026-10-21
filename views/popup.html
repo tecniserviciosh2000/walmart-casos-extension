@@ -342,11 +342,45 @@
     color: var(--primary);
   }
 
-  /* Fila Activo destacada */
+  /* Fila Activo destacada - borde superior del grupo */
   .activo-row td {
     background: #fefce8;
     border-bottom: 1px solid #fde68a;
     font-weight: 600;
+    border-top: 2px solid #94a3b8;
+  }
+  .activo-row td:first-child {
+    border-left: 2px solid #94a3b8;
+    border-radius: 8px 0 0 0;
+  }
+  .activo-row td:last-child {
+    border-right: 2px solid #94a3b8;
+    border-radius: 0 8px 0 0;
+  }
+
+  /* Bordes laterales de sub-filas del grupo Activo */
+  .sub-row td:first-child {
+    border-left: 2px solid #94a3b8;
+  }
+  .sub-row td:last-child {
+    border-right: 2px solid #94a3b8;
+  }
+  /* Última sub-fila visible: cierra el borde inferior del grupo */
+  .sub-row-end td {
+    border-bottom: 2px solid #94a3b8;
+  }
+  .sub-row-end td:first-child {
+    border-radius: 0 0 0 8px;
+  }
+  .sub-row-end td:last-child {
+    border-radius: 0 0 8px 0;
+  }
+  /* Columna de comentario en sub-filas: texto más largo */
+  .sub-row .comment {
+    width: 130px;
+    min-width: 130px;
+    font-size: 10px;
+    white-space: nowrap;
   }
 
   /* Alerta de validación */
