@@ -576,6 +576,12 @@ async function backToWelcome() {
 
 // Inicialización
 document.addEventListener("DOMContentLoaded", async () => {
+  // Mostrar versión dinámica desde el manifest
+  const versionEl = document.getElementById('appVersion');
+  if (versionEl) {
+    versionEl.textContent = `v${chrome.runtime.getManifest().version}`;
+  }
+
   // Validar sesión y cargar perfil
   await initializeApp();
 
