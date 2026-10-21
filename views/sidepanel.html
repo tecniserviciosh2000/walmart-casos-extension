@@ -18,7 +18,7 @@
   }
 
   body {
-    width: 550px;
+    width: 100%;
     margin: 0;
     padding: 20px;
     font-family: 'Inter', sans-serif;
@@ -190,6 +190,11 @@
     padding: 8px 0;
     border-bottom: 1px solid #e2e8f0;
     white-space: nowrap;
+  }
+  /* Labels largos pueden hacer wrap para no romper el layout */
+  .results-table td.label {
+    white-space: normal;
+    word-break: break-word;
   }
   .results-table tr:last-child td {
     border-bottom: none;
